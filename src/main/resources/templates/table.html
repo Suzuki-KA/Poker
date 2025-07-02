@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8" />
+        <title>Poker Table</title>
+        <style>
+            body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            }
+            canvas {
+            display: block;
+            background-color: green;
+            }
+        </style>
+    </head>
+    <body>
+        <canvas id="pokerCanvas"></canvas>
+
+        <script>
+            const canvas = document.getElementById('pokerCanvas');
+            const ctx = canvas.getContext('2d');
+
+            // リサイズ処理
+            function resizeCanvas() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+                draw(); // 再描画
+            }
+
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas(); // 初期化
+
+            // カードのオブジェクト
+            const card = {
+            x: 100,
+            y: 100,
+            width: 80,
+            height: 120,
+            color: 'white',
+            dragging: false,
+            offsetX: 0,
+            offsetY: 0
+            };
+
+            // 描画関数
+            function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // テーブル（丸テーブル）
+            ctx.fillStyle = '#006400';
+            ctx.beginPath();
+            ctx.ellipse(canvas.width / 2, canvas.height / 2, canvas.width * 0.4, canvas.height * 0.25, 0, 0, Math.PI * 2);
+            ctx.fill();
+
+            // カード
+            ctx.fillStyle = card.color;
+            ctx.fillRect(card.x, card.y, card.width, card.height);
+            ctx.strokeRect(card.x, card.y, card.width, card.height);
+            }
+
+            // マウスイベント
+            canvas.addEventListener('mousedown', (e) => {
+            if (e.offsetX >= card.x && e.offsetX <= card.x + card.width &&
+                e.offsetY >= card.y && e.offsetY <= card.y + card.height) {
+                card.dragging = true;
+                card.offsetX = e.offsetX - card.x;
+                card.offsetY = e.offsetY - card.y;
+            }
+            });
+
+            canvas.addEventListener('mouseup', () => {
+            card.dragging = false;
+            });
+
+            canvas.addEventListener('mousemove', (e) => {
+            if (card.dragging) {
+                card.x = e.offsetX - card.offsetX;
+                card.y = e.offsetY - card.offsetY;
+                draw();
+            }
+            });
+
+            draw(); // 初回描画
+        </script>
+    </body>
+</html>
