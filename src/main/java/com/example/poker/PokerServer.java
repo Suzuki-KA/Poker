@@ -62,7 +62,7 @@ public class PokerServer {
         public void onOpen(WebSocket conn, ClientHandshake handshake) {
             System.out.println("接続: " + conn.getRemoteSocketAddress());
             clients.add(conn);
-            conn.send("接続成功。名前を送信してください（例: name:Alice）");
+            conn.send("接続。名前を送信してください（例: name:Alice）");
         }
 
         public void onMessage(WebSocket conn, String message) {
@@ -71,7 +71,7 @@ public class PokerServer {
             if (message.startsWith("name:")) {
                 String name = message.substring(5).trim();
                 clientNameMap.put(conn, name);
-                conn.send("ようこそ " + name + " さん！");
+                conn.send(name + " さん");
                 checkAndStartGame();
             }
         }
