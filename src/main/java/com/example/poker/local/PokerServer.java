@@ -63,41 +63,13 @@ public class PokerServer {
                 // サーバーのプレイヤーとクライアントのプレイヤーを取得
                 Poker.Player serverPlayer = poker.getPlayers().get(0);
                 Poker.Player clientPlayer = poker.getPlayers().get(1);
-                oos.writeObject(clientPlayer.hand);
+                oos.writeObject(clientPlayer.getHand());
                 oos.flush();
 
-                // --- サーバー側のアクション ---
-                System.out.println(serverPlayer.name + "さん、アクションを選んでください（bet / check）:");
-                String serverAction = scanner.next();
-                int serverAmount = 0;
 
-                if (serverAction.equalsIgnoreCase("bet")) {
-                    System.out.println("ベット額を入力してください:");
-                    serverAmount = scanner.nextInt();
-                }
+                GameRound round = new GameRound(poker);
+                round.runServerRound(scanner, ois, oos);
 
-                // アクション処理
-                boolean ok = actionProcessor.processAction(serverPlayer, serverAction, serverAmount);
-                if (!ok) {
-                    System.out.println("無効なアクションです。");
-                    // 再度入力待ちにするなどの処理を書く
-                }
-
-                // サーバーアクション送信
-                oos.writeObject(serverAction);
-                oos.flush();
-
-                // --- クライアント側のアクション受信 ---
-                ActionData clientActionData = (ActionData) ois.readObject();
-                String clientAction = clientActionData.action;
-                int clientAmount = clientActionData.amount;
-
-                // Actionクラスで処理
-                Action actionHandler = new Action(poker);
-                boolean success = actionHandler.processAction(clientPlayer, clientAction, clientAmount);
-                if (!success) {
-                    System.out.println("クライアントのアクションが不正です: " + clientAction);
-                }
 
 
                 poker.printPlayerStatus();

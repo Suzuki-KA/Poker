@@ -38,25 +38,9 @@ public class PokerClient {
                 System.out.println(card);
             }
 
-            // サーバーのアクション受信
-            String serverAction = (String) ois.readObject();
-            System.out.println("サーバーのアクション: " + serverAction);
-
-            // クライアントのアクション入力
-            System.out.print("アクションを選んでください（call / raise / fold）: ");
-            String clientAction = scanner.next().toLowerCase();
-
-            // レイズを選んだ時だけその金額を指定
-            int raiseAmount = 0;
-            if (clientAction.equals("raise")) {
-                System.out.print("レイズ額を入力してください: ");
-                raiseAmount = scanner.nextInt();
-            }
-
-            // ActionData を送信
-            ActionData actionData = new ActionData(clientAction, raiseAmount);
-            oos.writeObject(actionData);
-            oos.flush();
+            GameRound round = new GameRound(null);
+            // クライアントがアクションするまで待ち
+            round.runClientRound(scanner, ois, oos);
 
             // 終了処理
             ois.close();

@@ -42,6 +42,9 @@ public class Poker {
         public Player(String name) {
             this.name = name;
         }
+        public List<Poker.Card> getHand(){
+            return hand;
+        }
     }
 
 
