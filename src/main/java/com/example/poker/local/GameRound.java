@@ -17,25 +17,39 @@ public class GameRound {
 
     
     // サーバー側でラウンドを進行するメソッド
-    public void runServerRound(Scanner scanner, ObjectInputStream ois, ObjectOutputStream oos) throws IOException, ClassNotFoundException, InterruptedException, ExecutionException {
+    public boolean runServerRound(Scanner scanner, ObjectInputStream ois, ObjectOutputStream oos) throws IOException, ClassNotFoundException, InterruptedException, ExecutionException {
+        boolean fold = false;
         // 最初のcall,bet
-        runServerAction(scanner, ois, oos);
+        fold = runServerAction(scanner, ois, oos);
+        if(fold){
+            return true;
+        }
         // フロップ
         serverFlop(oos);
         // 2回目のcall,bet
-        runServerAction(scanner, ois, oos);
+        fold = runServerAction(scanner, ois, oos);
+        if(fold){
+            return true;
+        }
         // ターン
         serverDraw(oos, "ターン");
         // 3回目のcall,bet
-        runServerAction(scanner, ois, oos);
+        fold = runServerAction(scanner, ois, oos);
+        if(fold){
+            return true;
+        }
         // リバー
         serverDraw(oos, "リバー");
         // 最後のcall,bet
-        runServerAction(scanner, ois, oos);
+        fold = runServerAction(scanner, ois, oos);
+        if(fold){
+            return true;
+        }
         // 勝敗
         judge(oos);
+        return false;
     }
-    public void runServerAction(Scanner scanner, ObjectInputStream ois, ObjectOutputStream oos) throws IOException, ClassNotFoundException{
+    public boolean runServerAction(Scanner scanner, ObjectInputStream ois, ObjectOutputStream oos) throws IOException, ClassNotFoundException {
         Poker.Player serverPlayer = poker.getPlayers().get(0);
         Poker.Player clientPlayer = poker.getPlayers().get(1);
 
@@ -47,7 +61,7 @@ public class GameRound {
             for (Poker.Card card : serverPlayer.getHand()) {
                 System.out.println(card);
             }
-            System.out.print(serverPlayer.name + "（サーバー） アクションを選んでください（bet / check）: ");
+            System.out.print(serverPlayer.name + "（サーバー） アクションを選んでください（bet / check / fold）: ");
             String serverAction = scanner.next();
             int serverAmount = 0;
             if (serverAction.equals("bet")) {
@@ -59,10 +73,14 @@ public class GameRound {
             oos.writeObject(new ActionData(serverAction, serverAmount));
             oos.flush();
 
+            if (serverAction.equals("fold")) return true;  // フォールドなら終了
+
             // クライアントのアクション受信
             ActionData clientResponse = (ActionData) ois.readObject();
             actionHandler.processAction(clientPlayer, clientResponse.action, clientResponse.amount);
             System.out.println("クライアントが " + clientResponse.action + " しました");
+
+            if (clientResponse.action.equals("fold")) return true;
 
             if (clientResponse.action.equals("raise")) {
                 // サーバーが応答する
@@ -78,7 +96,8 @@ public class GameRound {
                 oos.writeObject(new ActionData(responseAction, responseAmount));
                 oos.flush();
 
-                // 終了条件
+                if (responseAction.equals("fold")) return true;
+
                 if (responseAction.equals("call") || responseAction.equals("fold")) {
                     actionFinished = true;
                 }
@@ -86,30 +105,47 @@ public class GameRound {
                 actionFinished = true;
             }
         }
+
+        return false; // fold されなかった
     }
+
 
 
     // クライアント側でラウンドを進行するメソッド
-    public void runClientRound(Scanner scanner, ObjectInputStream ois, ObjectOutputStream oos, List<Poker.Card> hand) throws ClassNotFoundException, IOException{
+    public boolean runClientRound(Scanner scanner, ObjectInputStream ois, ObjectOutputStream oos, List<Poker.Card> hand) throws ClassNotFoundException, IOException{
+        boolean fold = false;
         // 最初のbet,call
-        runClientAction(scanner, ois, oos, hand);
+        fold = runClientAction(scanner, ois, oos, hand);
+        if(fold){
+            return true;
+        }
         // フロップ
         clientFlop(ois);
         // 2回目のbet,call
-        runClientAction(scanner, ois, oos, hand);
+        fold = runClientAction(scanner, ois, oos, hand);
+        if(fold){
+            return true;
+        }
         // ターン
         clientDraw(ois, "ターン");
         // 3回目のbet,call
-        runClientAction(scanner, ois, oos, hand);
+        fold = runClientAction(scanner, ois, oos, hand);
+        if(fold){
+            return true;
+        }
         // リバー
         clientDraw(ois, "リバー");
         // 最後のbet,call
-        runClientAction(scanner, ois, oos, hand);
+        fold = runClientAction(scanner, ois, oos, hand);
+        if(fold){
+            return true;
+        }
+        return false;
     }
-    public void runClientAction(Scanner scanner, ObjectInputStream ois, ObjectOutputStream oos, List<Poker.Card> hand) throws IOException, ClassNotFoundException {
-        // サーバーのアクション受信、アクションするまで待ち
+    public boolean runClientAction(Scanner scanner, ObjectInputStream ois, ObjectOutputStream oos, List<Poker.Card> hand) throws IOException, ClassNotFoundException {
         ActionData serverAction = (ActionData) ois.readObject();
         System.out.println("サーバーが " + serverAction.action + (serverAction.amount > 0 ? "（" + serverAction.amount + "）" : "") + " しました");
+        if(serverAction.action.equals("fold")) return true;
 
         System.out.println("あなたの手札:");
         for (Poker.Card card : hand) {
@@ -126,12 +162,17 @@ public class GameRound {
         oos.writeObject(new ActionData(clientAction, amount));
         oos.flush();
 
-        // もしクライアントが raise したら、サーバーからの再アクションを受信
+        if (clientAction.equals("fold")) return true;
+
         if (clientAction.equals("raise")) {
             ActionData serverResponse = (ActionData) ois.readObject();
             System.out.println("サーバーが " + serverResponse.action + (serverResponse.amount > 0 ? "（" + serverResponse.amount + "）" : "") + " しました");
+            if (serverResponse.action.equals("fold")) return true;
         }
+
+        return false;
     }
+
     public void serverFlop(ObjectOutputStream oos) throws IOException{
         for(int i = 0; i < 3; i++){
             poker.dealTableCards();
@@ -185,10 +226,10 @@ public class GameRound {
                 if (i < winners.size() - 1) sb.append(", ");
             }
         }
-
-        oos.writeObject(sb.toString());
-        oos.flush();
-
+        // foldではないことを通知
+        oos.writeObject(false);  // ← boolean 型
+        oos.writeObject(sb.toString()); // ← 勝敗のメッセージ
+        oos.flush(); // ← 忘れず flush！
         System.out.println("[サーバー] " + sb.toString());
     }
 

@@ -39,11 +39,36 @@ public class PokerClient {
             }
             
             GameRound round = new GameRound(null);
-            // サーバーがアクションするまで待ち
-            round.runClientRound(scanner, ois, oos, hand);
-            // サーバーからの勝者情報を受信
-            String result = (String) ois.readObject();
-            System.out.println("【結果】" + result);
+            String serverContinue = "y";
+            String clientContinue = "y";
+
+            while (serverContinue.equals("y") && clientContinue.equals("y")) {
+                round.runClientRound(scanner, ois, oos, hand);
+
+                // フラグを受信
+                boolean fold = (boolean) ois.readObject();  // "fold" または "normal"
+
+                // 勝敗結果が通常の勝負によるものであれば受信・表示
+                if (fold) {
+                    // foldによる勝敗 → スキップ or 別メッセージ表示も可
+                    System.out.println("相手がフォールドしました。");
+                } else {
+                    String result = (String) ois.readObject();
+                    System.out.println("【結果】" + result);
+                }
+
+                // サーバーの意思を受信
+                serverContinue = (String) ois.readObject();
+
+                // クライアントの意思確認
+                System.out.print("続ける場合は y を、終わらせる場合は n を入力してください: ");
+                clientContinue = scanner.next();
+
+                // クライアントの意思をサーバーに送信
+                oos.writeObject(clientContinue);
+                oos.flush();
+            }
+
 
             
 

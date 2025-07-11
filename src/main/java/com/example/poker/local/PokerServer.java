@@ -69,12 +69,24 @@ public class PokerServer {
 
                 GameRound round = new GameRound(poker);
 
-                String game = "y";
-                while(game.equals("y")){
-                    round.runServerRound(scanner, ois, oos);
-                    System.out.println("続ける場合は y を、終わらせる場合は n を入力してください。");
-                    game = scanner.next();
+                String serverContinue = "y";
+                String clientContinue = "y";
+                boolean fold = false;
 
+                while (serverContinue.equals("y") && clientContinue.equals("y")) {
+                    fold = round.runServerRound(scanner, ois, oos);
+                    oos.writeObject(fold);
+
+                    // サーバーの意思確認
+                    System.out.println("続ける場合は y を、終わらせる場合は n を入力してください。");
+                    serverContinue = scanner.next();
+
+                    // サーバーの意思をクライアントへ送信
+                    oos.writeObject(serverContinue);
+                    oos.flush();
+
+                    // クライアントの意思を受信
+                    clientContinue = (String) ois.readObject();
                 }
                 
 
