@@ -62,7 +62,6 @@ public class Poker {
         pot = 0;
         currentMaxBet = 0;
         dealCards();
-        dealTableCards();
     }
 
     public void resetRound() {

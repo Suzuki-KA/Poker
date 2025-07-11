@@ -37,10 +37,15 @@ public class PokerClient {
             for (Poker.Card card : hand) {
                 System.out.println(card);
             }
-
+            
             GameRound round = new GameRound(null);
-            // クライアントがアクションするまで待ち
-            round.runClientRound(scanner, ois, oos);
+            // サーバーがアクションするまで待ち
+            round.runClientRound(scanner, ois, oos, hand);
+            // サーバーからの勝者情報を受信
+            String result = (String) ois.readObject();
+            System.out.println("【結果】" + result);
+
+            
 
             // 終了処理
             ois.close();

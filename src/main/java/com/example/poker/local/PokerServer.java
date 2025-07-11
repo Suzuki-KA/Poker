@@ -68,8 +68,15 @@ public class PokerServer {
 
 
                 GameRound round = new GameRound(poker);
-                round.runServerRound(scanner, ois, oos);
 
+                String game = "y";
+                while(game.equals("y")){
+                    round.runServerRound(scanner, ois, oos);
+                    System.out.println("続ける場合は y を、終わらせる場合は n を入力してください。");
+                    game = scanner.next();
+
+                }
+                
 
 
                 poker.printPlayerStatus();
