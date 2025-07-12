@@ -134,7 +134,7 @@ public class GameRound {
             return true;
         }
         // リバー
-        clientDraw(ois, "リバー");
+        clientRiver(ois, "リバー");
         // 最後のbet,call
         fold = runClientAction(scanner, ois, oos, hand);
         if(fold){
@@ -196,16 +196,33 @@ public class GameRound {
     public void serverDraw(ObjectOutputStream oos, String action) throws IOException{
         poker.dealTableCards();
         List<Poker.Card> flop = poker.getTableCards();
-        oos.writeObject(flop);
         System.out.println(action+":");
         for (Poker.Card card : flop) {
             System.out.println(card);
+            oos.writeObject(card);
         }
     }
 
     public void clientDraw(ObjectInputStream ois, String action) throws ClassNotFoundException, IOException{
         // フロップを受信して表示
-        List<Poker.Card> flop = (List<Poker.Card>) ois.readObject();
+        List<Poker.Card> flop = new ArrayList<>();
+        flop.add((Poker.Card) ois.readObject());
+        flop.add((Poker.Card) ois.readObject());
+        flop.add((Poker.Card) ois.readObject());
+        flop.add((Poker.Card) ois.readObject());
+        System.out.println(action+":");
+        for (Poker.Card card : flop) {
+            System.out.println(card);
+        }
+    }
+    public void clientRiver(ObjectInputStream ois, String action) throws ClassNotFoundException, IOException{
+        // フロップを受信して表示
+        List<Poker.Card> flop = new ArrayList<>();
+        flop.add((Poker.Card) ois.readObject());
+        flop.add((Poker.Card) ois.readObject());
+        flop.add((Poker.Card) ois.readObject());
+        flop.add((Poker.Card) ois.readObject());
+        flop.add((Poker.Card) ois.readObject());
         System.out.println(action+":");
         for (Poker.Card card : flop) {
             System.out.println(card);

@@ -75,7 +75,9 @@ public class PokerServer {
 
                 while (serverContinue.equals("y") && clientContinue.equals("y")) {
                     fold = round.runServerRound(scanner, ois, oos);
-                    oos.writeObject(fold);
+                    if(fold){
+                        oos.writeObject(fold);
+                    }
 
                     // サーバーの意思確認
                     System.out.println("続ける場合は y を、終わらせる場合は n を入力してください。");
