@@ -416,6 +416,10 @@ public class Poker {
         int totalAmount = currentMaxBet - player.currentBet + raiseAmount;
         bet(player, totalAmount);
     }
+    
+    public void check(Player player){
+
+    }
 
 
     public void fold(Player player) {

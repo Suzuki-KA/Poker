@@ -16,6 +16,9 @@ public class Action {
      */
     public boolean processAction(Poker.Player player, String action, int amount) {
         switch (action) {
+            case "check":
+                poker.check(player);
+                break;
             case "bet":
                 poker.bet(player, (int)amount);
                 break;

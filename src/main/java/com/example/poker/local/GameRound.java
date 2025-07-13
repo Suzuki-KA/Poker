@@ -73,6 +73,7 @@ public class GameRound {
             oos.writeObject(new ActionData(serverAction, serverAmount));
             oos.flush();
 
+            
             if (serverAction.equals("fold")) return true;  // フォールドなら終了
 
             // クライアントのアクション受信
@@ -80,7 +81,12 @@ public class GameRound {
             actionHandler.processAction(clientPlayer, clientResponse.action, clientResponse.amount);
             System.out.println("クライアントが " + clientResponse.action + " しました");
 
+            
             if (clientResponse.action.equals("fold")) return true;
+
+            if (serverAction.equals("check") && clientResponse.action.equals("check")) {
+                actionFinished = true;
+            }
 
             if (clientResponse.action.equals("raise")) {
                 // サーバーが応答する
@@ -145,18 +151,44 @@ public class GameRound {
     public boolean runClientAction(Scanner scanner, ObjectInputStream ois, ObjectOutputStream oos, List<Poker.Card> hand) throws IOException, ClassNotFoundException {
         ActionData serverAction = (ActionData) ois.readObject();
         System.out.println("サーバーが " + serverAction.action + (serverAction.amount > 0 ? "（" + serverAction.amount + "）" : "") + " しました");
-        if(serverAction.action.equals("fold")) return true;
+
+        if (serverAction.action.equals("fold")) return true;
 
         System.out.println("あなたの手札:");
         for (Poker.Card card : hand) {
             System.out.println(card);
         }
-        System.out.print("アクションを選んでください（call / raise / fold）: ");
-        String clientAction = scanner.next();
+
+        String clientAction = "";
         int amount = 0;
-        if (clientAction.equals("raise")) {
-            System.out.print("レイズ額を入力: ");
-            amount = scanner.nextInt();
+
+        if (serverAction.action.equals("check")) {
+            // クライアントは check / bet / fold ができる
+            while (true) {
+                System.out.print("アクションを選んでください（check / bet / fold）: ");
+                clientAction = scanner.next();
+                if (clientAction.equals("check") || clientAction.equals("bet") || clientAction.equals("fold")) break;
+                System.out.println("無効なアクションです。");
+            }
+
+            if (clientAction.equals("bet")) {
+                System.out.print("ベット額を入力: ");
+                amount = scanner.nextInt();
+            }
+
+        } else {
+            // サーバーが bet または raise をしてきた場合、call / raise / fold ができる
+            while (true) {
+                System.out.print("アクションを選んでください（call / raise / fold）: ");
+                clientAction = scanner.next();
+                if (clientAction.equals("call") || clientAction.equals("raise") || clientAction.equals("fold")) break;
+                System.out.println("無効なアクションです。");
+            }
+
+            if (clientAction.equals("raise")) {
+                System.out.print("レイズ額を入力: ");
+                amount = scanner.nextInt();
+            }
         }
 
         oos.writeObject(new ActionData(clientAction, amount));
@@ -164,7 +196,8 @@ public class GameRound {
 
         if (clientAction.equals("fold")) return true;
 
-        if (clientAction.equals("raise")) {
+        // クライアントが bet または raise した場合は、サーバーの返答を受け取る
+        if (clientAction.equals("bet") || clientAction.equals("raise")) {
             ActionData serverResponse = (ActionData) ois.readObject();
             System.out.println("サーバーが " + serverResponse.action + (serverResponse.amount > 0 ? "（" + serverResponse.amount + "）" : "") + " しました");
             if (serverResponse.action.equals("fold")) return true;
@@ -172,6 +205,7 @@ public class GameRound {
 
         return false;
     }
+
 
     public void serverFlop(ObjectOutputStream oos) throws IOException{
         for(int i = 0; i < 3; i++){
